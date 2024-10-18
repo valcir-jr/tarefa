@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Simulador de trajetória</title>
+        <style>
+            input { margin: 10px; }
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            canvas {
+                border: 2px solid yellow;
+                background-color: skyblue;
+                display: block;
+                width: 100vw;
+                height: 75vh;
+            }
+            div {
+                height: 10vh;
+                width: 100vw;
+                background-color: greenyellow;
+            }
+        </style>
+    </head>
+
+    <body>
+        <canvas id="canvas" width="1900" height="700"></canvas> 
+        <div></div> <br>
+        <input type="range" name="Velocidade"> <input type="range" name="Ângulo"> 
+        
+        <script src="trajetoria.js"></script>
+    </body>
+</html>
