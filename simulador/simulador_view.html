@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Simulador de trajetória</title>
+        <style>
+            input { margin: 10px; }
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            canvas {
+                border: 2px solid yellow;
+                background-color: skyblue;
+                display: block;
+                width: 100vw;
+                height: 75vh;
+            }
+            div {
+                height: 10vh;
+                width: 100vw;
+                background-color: greenyellow;
+            }
+        </style>
+    </head>
+
+    <body>
+        <canvas id="canvas" width="1900" height="700"></canvas> 
+        <div></div> <br>
+
+        <label style="font-size: 23px; font-family: Arial; margin: 23px;">
+            Velocidade: <output id="v_valor"></output>
+        </label>
+        <input type="range" min="0" max="100" name="velocidade" step="1" id="v_input">
+        <label style="font-size: 23px; font-family: Arial; margin: 23px;">
+            Ângulo: <output id="a_valor"></output>
+        </label>
+        <input type="range" min="1" max="179" name="ângulo" step="1" id="a_input"> 
+        
+        <script src="trajetoria.js"></script>
+    </body>
+</html>
