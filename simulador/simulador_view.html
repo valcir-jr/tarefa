@@ -1,71 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Simulador de Trajetória</title>
-        <style>
-            input { margin: 10px; }
-            body {
-                margin: 0;
-                padding: 0;
-                font-family: Arial, sans-serif;
-            }
-            canvas {
-                border: 2px solid yellow;
-                background-color: skyblue;
-                display: block;
-                width: 100vw;
-                height: 75vh;
-            }
-            div {
-                height: 10vh;
-                width: 100vw;
-                background-color: greenyellow;
-            }
-            label {
-                font-size: 23px;
-                margin: 23px;
-            }
-            output {
-                display: inline-block;
-                width: 50px; 
-                text-align: center;
-            }
-            #controls {
-                padding: 20px;
-                text-align: center;
-            }
-            button {
-                font-size: 18px;
-                padding: 10px 20px;
-                margin-top: 20px;
-                cursor: pointer;
-                background-color: lightgreen;
-                border: none;
-                border-radius: 5px;
-            }
-        </style>
-    </head>
 
-    <body>
-        <canvas id="canvas" width="1900" height="700"></canvas> 
-        <div></div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Trajetória</title>
+    <style>
+        input {
+            margin: 10px;
+        }
 
-        <div id="controls">
-            <label>
-                Velocidade: <output id="v_valor">50</output> m/s
-            </label>
-            <input type="range" min="1" max="100" step="1" id="v_input" value="50">
-            
-            <label>
-                Ângulo: <output id="a_valor">45</output>°
-            </label>
-            <input type="range" min="0" max="89" step="1" id="a_input" value="45"> 
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
 
-            <button id="launch_button">Lançar</button>
-        </div>
+        canvas {
+            border: 2px solid yellow;
+            background-color: skyblue;
+            display: block;
+            width: 100vw;
+            height: 75vh;
+        }
 
-        <script src="trajetoria.js"></script>
-    </body>
+        div {
+            height: 10vh;
+            width: 100vw;
+            background-color: greenyellow;
+        }
+
+        label {
+            font-size: 23px;
+            margin: 23px;
+        }
+
+        output {
+            display: inline-block;
+            width: 50px;
+            text-align: center;
+        }
+
+        #controls {
+            padding: 20px;
+            text-align: center;
+        }
+
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            background-color: lightgreen;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="1900" height="700"></canvas>
+    <div></div>
+
+    <div id="controls">
+        <span id="message" style="font-size: 20px; font-weight: bold; text-align: center; margin-top: -30px; display: block;"></span>
+        <label>
+            Velocidade: <output id="v_valor">50</output> m/s
+        </label>
+        <input type="range" min="1" max="100" step="1" id="v_input" value="50">
+
+        <label>
+            Ângulo: <output id="a_valor">45</output>°
+        </label>
+        <input type="range" min="0" max="89" step="1" id="a_input" value="45">
+
+        <button id="launch_button">Lançar</button>
+    </div>
+
+    <script src="trajetoria.js"></script>
+</body>
+
 </html>
