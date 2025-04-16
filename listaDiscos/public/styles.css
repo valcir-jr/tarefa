@@ -1,0 +1,29 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: rgb(161, 161, 161);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cadastro {
+  background-color: white;
+  height: auto;
+  width: 80%;
+  padding: 2rem;
+}
+
+input {
+  margin: 0.5rem;
+}
+
+button {
+  border: 0;
+  border-radius: 3px;
+  background-color: green;
+  color: white;
+  padding: 0.5rem;
+  margin-top: 1rem;
+}
