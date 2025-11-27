@@ -34,7 +34,7 @@ float deltaAngle = 2.0;
 int deltaFire = 1;
 
 unsigned long lastRead = 0;
-unsigned long interval = 60;
+unsigned long interval = 100;
 
 // limites ultrassom
 float minDist = 5;     // força máxima
@@ -43,11 +43,16 @@ float maxDist = 40;    // força mínima
 float smoothForce = 0;
 bool firstForce = true;
 
+// =============================
+// ANGULO - suavização própria
+// =============================
+float smoothAngle = 45;
+bool firstAngle = true;
+
 // =========================
 // ULTRASSOM MAIS ESTÁVEL
 // =========================
 float lerUltrassom() {
-  // Dispara o pulso
   digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(3);
   digitalWrite(TRIG_PIN, HIGH);
@@ -56,12 +61,10 @@ float lerUltrassom() {
 
   long duracao = pulseIn(ECHO_PIN, HIGH, 25000);
 
-  // evita valores inválidos
   if (duracao == 0) return maxDist;
 
   float distancia = duracao * 0.0340 / 2.0;
 
-  // limita entre min/max
   if (distancia < minDist) distancia = minDist;
   if (distancia > maxDist) distancia = maxDist;
 
@@ -72,28 +75,49 @@ float calcularForca(float dist) {
   float f = 1.0 - ((dist - minDist) / (maxDist - minDist));
   f = constrain(f, 0.0, 1.0);
 
-  // primeira leitura sem suavização
   if (firstForce) {
     smoothForce = f;
     firstForce = false;
   }
 
-  // suavização mais forte (85% novo, 15% antigo)
   smoothForce = (f * 0.85) + (smoothForce * 0.15);
 
   return smoothForce;
 }
 
+// ============================
+// JOYSTICK COM SUAVIZAÇÃO
+// ============================
 float lerAnguloJoystick() {
   int val = analogRead(JOY_Y); // 0–4095
-  float ang = map(val, 0, 4095, 60, -60);  
-  return ang;
+
+  float ang = map(val, 0, 4095, 90, 0);
+
+  if (firstAngle) {
+    smoothAngle = ang;
+    firstAngle = false;
+  }
+
+  // Suavização 70/30
+  smoothAngle = (ang * 0.7) + (smoothAngle * 0.3);
+
+  // Deadzone para impedir vibração
+  if (abs(smoothAngle - lastAngle) < 1.5) {
+    return lastAngle;
+  }
+
+  smoothAngle = constrain(smoothAngle, 0, 90);
+
+  return smoothAngle;
 }
 
+// =========================
+// ENVIO JSON
+// =========================
 void enviarJSON(float força, float angulo, int fire) {
   char buffer[90];
   snprintf(buffer, sizeof(buffer),
-    "{\"f\":%.2f,\"a\":%.1f,\"b\":%d}", força, angulo, fire);
+           "{\"f\":%.2f,\"a\":%.1f,\"b\":%d}", força, angulo, fire);
 
   ws.textAll(buffer);
 }
