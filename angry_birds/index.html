@@ -63,12 +63,15 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// FÍSICA
 const gravity = 0.45;
+const airResistance = 0.995;
 
 let angle = 45;
 let force = 0;
 let fire = 0;
 
+// WEBSOCKET
 const ws = new WebSocket("ws://10.68.55.64/ws");
 ws.onmessage = (msg) => {
   const data = JSON.parse(msg.data);
@@ -83,31 +86,54 @@ ws.onmessage = (msg) => {
   if (fire === 1) shoot();
 };
 
+// SPRITES
+const birdImg = new Image();
+birdImg.src = "bird.png";
+const pigImg = new Image();
+pigImg.src = "pig.png";
+const boxImg = new Image();
+boxImg.src = "box.png";
+
 // PÁSSARO
 let birdStartX = 150;
 let birdStartY = canvas.height - 100;
-let bird = { x: birdStartX, y: birdStartY, vx: 0, vy: 0, active: false };
+let bird = { 
+  x: birdStartX, 
+  y: birdStartY, 
+  vx: 0, 
+  vy: 0, 
+  active: false,
+  bounces: 0,
+  maxBounces: 3
+};
 
 // PONTUAÇÃO E JOGADAS
 let score = 0;
 let shots = 0;
 const maxShots = 10;
 
-// OBSTÁCULOS - baseado na imagem enviada
-// chão: canvas.height - 80 (altura do chão)
+// CHÃO
 const groundY = canvas.height - 80;
 
+// OBSTÁCULOS
 let obstacles = [
-  // 5 destrutíveis (marrons) - posição e tamanho aproximados da imagem
-  { x: 650, y: groundY, w: 40, h: 40, color: "#b07050", type: "destrutível" }, 
-  { x: 810, y: groundY, w: 60, h: 60, color: "#a55a36", type: "destrutível" }, 
-  { x: 890, y: groundY - 40, w: 50, h: 50, color: "#9e5b39", type: "destrutível" }, 
-  { x: 1010, y: groundY, w: 60, h: 60, color: "#b2754a", type: "destrutível" },
-  { x: 1100, y: groundY, w: 60, h: 60, color: "#c78d63", type: "destrutível" },
+  { x: 500, y: groundY, w: 40, h: 40, type: "destrutível" }, 
+  { x: 810, y: groundY, w: 60, h: 60, type: "destrutível" }, 
+  { x: 200, y: groundY - 300, w: 50, h: 50, type: "destrutível" },
+  { x: 800, y: groundY - 500, w: 80, h: 80, type: "destrutível" }, 
+  { x: 1310, y: groundY, w: 100, h: 70, type: "destrutível" },
+  { x: 1500, y: groundY, w: 80, h: 100, type: "destrutível" },
+  { x: 1500, y: groundY - 100, w: 80, h: 100, type: "destrutível" },
+  { x: 980, y: groundY - 500, w: 20, h: 400, type: "inútil" },
+  { x: 980, y: groundY, w: 20, h: 200, type: "inútil" }
+];
 
-  // 2 inúteis (cinzas verticais)
-  { x: 980, y: groundY - 500, w: 20, h: 400, color: "#888888", type: "inútil" },
-  { x: 980, y: groundY, w: 20, h: 200, color: "#555555", type: "inútil" }
+// PORCOS
+let pigs = [
+  { x: 500 + 10, y: groundY - 40 - 20, w: 40, h: 40, active: true, vy:0 },
+  { x: 810 + 0, y: groundY - 60 - 20, w: 40, h: 40, active: true, vy:0 },
+  { x: 800 + 20, y: groundY - 580 - 20, w: 40, h: 40, active: true, vy:0 },
+  { x: 1530, y: groundY - 200 - 20, w: 40, h: 40, active: true, vy:0 },
 ];
 
 // PARTICULAS
@@ -154,8 +180,19 @@ function drawBackground() {
 }
 function drawObstacles() {
   obstacles.forEach((o) => {
-    ctx.fillStyle = o.color;
-    ctx.fillRect(o.x, o.y - o.h, o.w, o.h);
+    if (o.type === "destrutível") {
+      ctx.drawImage(boxImg, o.x, o.y - o.h, o.w, o.h);
+    } else {
+      ctx.fillStyle = "#888888";
+      ctx.fillRect(o.x, o.y - o.h, o.w, o.h);
+    }
+  });
+}
+function drawPigs() {
+  pigs.forEach(p => {
+    if (p.active) {
+      ctx.drawImage(pigImg, p.x - p.w/2, p.y - p.h/2, p.w, p.h);
+    }
   });
 }
 function drawAimArrow() {
@@ -184,46 +221,111 @@ function drawAimArrow() {
   ctx.fill();
 }
 function drawBird() {
-  ctx.beginPath();
-  ctx.fillStyle = "red";
-  ctx.arc(bird.x, bird.y, 20, 0, Math.PI * 2);
-  ctx.fill();
+  const size = 40;
+  const angleR = Math.atan2(bird.vy, bird.vx);
+  ctx.save();
+  ctx.translate(bird.x, bird.y);
+  ctx.rotate(angleR);
+  ctx.drawImage(birdImg, -size/2, -size/2, size, size);
+  ctx.restore();
 }
 
 // FÍSICA E COLISÃO
 function checkCollision() {
+  // Obstáculos
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const o = obstacles[i];
-    if (
-      bird.x + 20 > o.x &&
-      bird.x - 20 < o.x + o.w &&
-      bird.y + 20 > o.y - o.h &&
-      bird.y - 20 < o.y
-    ) {
+    const collidedX = bird.x + 20 > o.x && bird.x - 20 < o.x + o.w;
+    const collidedY = bird.y + 20 > o.y - o.h && bird.y - 20 < o.y;
+
+    if (collidedX && collidedY) {
       if (o.type === "destrutível") {
         score += 10;
         document.getElementById("score").textContent = score;
-        createExplosion(bird.x, bird.y, o.color);
+        createExplosion(bird.x, bird.y, "brown");
         obstacles.splice(i, 1);
+        resetBird();
+        return;
+      } else if (o.type === "inútil") {
+        const overlapX = Math.min(bird.x + 20 - o.x, o.x + o.w - (bird.x - 20));
+        const overlapY = Math.min(bird.y + 20 - (o.y - o.h), o.y - (bird.y - 20));
+
+        if (overlapX < overlapY) bird.vx *= -0.7;
+        else bird.vy *= -0.6;
+        bird.bounces++;
+        return;
       }
-      // inútil: só atrapalha, sem ponto
-      resetBird();
-      return;
     }
   }
+
+  // Porcos
+  pigs.forEach(p => {
+    if (p.active) {
+      const collidedX = bird.x + 20 > p.x - p.w/2 && bird.x - 20 < p.x + p.w/2;
+      const collidedY = bird.y + 20 > p.y - p.h/2 && bird.y - 20 < p.y + p.h/2;
+      if (collidedX && collidedY) {
+        p.active = false;
+        score += 20;
+        document.getElementById("score").textContent = score;
+        createExplosion(p.x, p.y, "green");
+      }
+    }
+  });
 }
 
 function updateBird() {
   if (!bird.active) return;
+
+  bird.vx *= airResistance;
+  bird.vy *= airResistance;
   bird.vy += gravity;
+
   bird.x += bird.vx;
   bird.y += bird.vy;
 
   checkCollision();
 
+  // Rebotes no chão
   if (bird.y > groundY) {
-    resetBird();
+    bird.y = groundY;
+    if (bird.bounces < bird.maxBounces) {
+      bird.vy *= -0.6;
+      bird.vx *= 0.8;
+      bird.bounces++;
+    } else {
+      resetBird();
+    }
   }
+}
+
+// Atualiza porcos caindo se não estiverem apoiados
+function updatePigs() {
+  pigs.forEach(p => {
+    if (!p.active) return;
+
+    let supported = false;
+    // Verifica se apoiado em algum obstáculo
+    obstacles.forEach(o => {
+      if (o.type === "destrutível" && 
+          p.x + p.w/2 > o.x && p.x - p.w/2 < o.x + o.w &&
+          Math.abs((p.y + p.h/2) - (o.y - o.h)) < 5) {
+        supported = true;
+      }
+    });
+
+    if (!supported) {
+      p.vy += gravity;
+      p.y += p.vy;
+
+      // Colisão com o chão
+      if (p.y + p.h/2 >= groundY) {
+        p.y = groundY - p.h/2;
+        p.active = false;
+      }
+    } else {
+      p.vy = 0; // mantém parado sobre o obstáculo
+    }
+  });
 }
 
 function resetBird() {
@@ -232,6 +334,7 @@ function resetBird() {
   bird.vx = 0;
   bird.vy = 0;
   bird.active = false;
+  bird.bounces = 0;
 
   shots++;
   document.getElementById("shots").textContent = shots;
@@ -242,15 +345,14 @@ function resetBird() {
 function shoot() {
   if (bird.active || shots >= maxShots) return;
   const rad = (angle * Math.PI) / 180;
-  const power = force * 25;
+  const power = force * 29;
   bird.vx = Math.cos(rad) * power;
   bird.vy = -Math.sin(rad) * power;
   bird.active = true;
 }
 
-// VITÓRIA / DERROTA
 function checkEndGame() {
-  const destrutiveLeft = obstacles.some((o) => o.type === "destrutível");
+  const destrutiveLeft = obstacles.some(o => o.type === "destrutível");
   if (!destrutiveLeft) showMessage("Você Venceu!");
   else if (shots >= maxShots) showMessage("Você Perdeu!");
 }
@@ -261,13 +363,14 @@ function showMessage(text) {
   msgDiv.style.display = "block";
 }
 
-// LOOP
 function gameLoop() {
   drawBackground();
   drawObstacles();
+  drawPigs();
   drawAimArrow();
   drawBird();
   updateBird();
+  updatePigs();
   updateParticles();
   drawParticles();
   requestAnimationFrame(gameLoop);
